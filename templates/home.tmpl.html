@@ -1,0 +1,17 @@
+<html>
+	<head>
+		<title> BLOG HOME PAGE </title>
+	</head>
+	<body>
+	<div class="posts">
+		{{#each posts}}
+		<div class="post">
+			<h2>{{title}}</h2>
+			<h3>Written By: {{author}} </h3>
+			<a href="posts/{{slug}}.html">Read More</a>
+		</div>
+		{{/each}}
+	</div>
+	</body>
+</html>
+
