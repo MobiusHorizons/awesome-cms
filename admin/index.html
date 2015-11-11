@@ -1,38 +1,6 @@
 <html>
 <head>
 	<script src="include.js"></script>
-	<script>
-function get(url, cb){
-	var xhr = new XMLHttpRequest();
-	xhr.open('get', url);
-	xhr.onreadystatechange = function(e){
-		if (xhr.response){
-			cb(JSON.parse(xhr.response));
-		}
-	}
-	xhr.send();
-}
-
-function write(name, html){
-	document.body.innerHTML += html;
-}
-
-var data = {};
-get('../api/posts.json', function(p){
-	console.log(p);
-	data.posts = p;
-	if (data.templates){
-		render(data, write);
-	}
-});
-
-get('../api/templates.json', function(t){
-	data.templates = t;
-	if (data.posts){
-		render(data, write);
-	}
-});
-	</script>
 </head>
 <body>
 </body>
