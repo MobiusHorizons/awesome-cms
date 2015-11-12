@@ -1,7 +1,24 @@
 <html>
-<head>
-	<script src="include.js"></script>
-</head>
-<body>
-</body>
+  <head>
+    <script src="js/app.js"></script>
+  </head>
+  <body>
+    <div class="login">
+      <label for="github-token">github token</label><input id="github-token" type="text"></input>
+      <button name="submit" id="github-init">init</button>
+    </div>
+    <div class="post">
+      <div>
+        <label for="title">title</label>
+        <input class="title"></input>
+      </div>
+      <div>
+        <label for="author">author</label>
+        <input class="author"></input>
+      </div>
+      <div><label>Content</label></div>
+      <div><textarea class="content"></textarea></div> 
+      <button class="save">Save</button>
+    </div>
+  </body>
 </html>

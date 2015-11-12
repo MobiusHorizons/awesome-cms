@@ -1,56 +1,182 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-// api
-exports = module.exports = {
-	posts     : require('./posts.json'),
-	templates : require ('./templates.json')
+var exports = module.exports = {
+  get : function get(url) {
+    // Return a new promise.
+    return new Promise(function(resolve, reject) {
+      // Do the usual XHR stuff
+      var req = new XMLHttpRequest();
+      req.open('GET', url);
+
+      req.onload = function() {
+        // This is called even on 404 etc
+        // so check the status
+        if (req.status == 200) {
+          // Resolve the promise with the response text
+          resolve(JSON.parse(req.response));
+        }
+        else {
+          // Otherwise reject with the status text
+          // which will hopefully be a meaningful error
+          reject(Error(req.statusText));
+        }
+      };
+
+      // Handle network errors
+      req.onerror = function() {
+        reject(Error("Network Error"));
+      };
+
+      // Make the request
+      req.send();
+    });
+  }
+}
+
+},{}],2:[function(require,module,exports){
+var GH    = require('./upload.js'),
+    theme = require('../../theme/index.js'),
+    ui    = require('./ui.js'),
+    ajax  = require('./ajax.js')
+;
+
+function get(url, cb){
+  var xhr = new XMLHttpRequest();
+  xhr.open('get', url);
+  xhr.onreadystatechange = function(e){
+    if (xhr.response){
+      cb(JSON.parse(xhr.response));
+    }
+  }
+  xhr.send();
+}
+
+var data = {};
+
+function save(){
+  theme.render(data, GH.write);
+  GH.push({"name" : "Paul Martin", "email" : "codemobius@gmail.com"}, "update post 0");
+}
+
+//GH.init("MobiusHorizons/awesome-cms", "f4555d6995c09fafa67079326afefd1f9cdd9f51");
+Promise.all([
+    ajax.get('../api/posts.json'),
+    ajax.get('../api/templates.json')
+]).then(function(apidata){
+  data.posts = apidata[0];
+  data.templates = apidata[1];
+  ui.init(data, save)
+}, function(error){
+    console.log(error);
+});
+
+},{"../../theme/index.js":59,"./ajax.js":1,"./ui.js":3,"./upload.js":4}],3:[function(require,module,exports){
+var GH = require('./upload.js');
+
+function q(selector, justOne){
+  if (justOne) { 
+    return document.querySelector(selector);
+  }
+  return document.querySelectorAll(selector);
+}
+
+function bind(el, events, cb){
+  el.addEventListener(events, cb);
+}
+
+var exports = module.exports = {
+  init : function(data, save){
+    console.log(data);
+    if (localStorage && localStorage.githubToken){
+      q('#github-token',true).value = localStorage.githubToken;
+      GH.init('MobiusHorizons/awesome-cms', localStorage.githubToken);
+    }
+
+    var loginBtn = q('#github-init', true)
+
+    bind(loginBtn, 'click', function(){
+      var token = q('#github-token',true).value;
+      GH.init('MobiusHorizons/awesome-cms', token);
+      if (localStorage){
+        localStorage.githubToken = token;
+      }
+    });
+    post = {
+      title   : q('input.title', true),
+      author  : q('input.author', true),
+      content : q('textarea.content', true)
+    }
+    post.title.value    = data.posts[0].title;
+    post.author.value   = data.posts[0].author;
+    post.content.value  = data.posts[0].content;
+
+    bind(q('button.save', true), 'click', function(){
+      data.posts[0].title = post.title.value;
+      data.posts[0].author = post.author.value;
+      data.posts[0].content = post.content.value;
+      GH.write('api/posts.json', JSON.stringify(data.posts));
+      save();
+    });
+  }
+}
+
+},{"./upload.js":4}],4:[function(require,module,exports){
+
+
+ var repo = {};
+
+var GH = module.exports = {};
+
+var local = {
+	updates : [],
 };
 
-},{"./posts.json":2,"./templates.json":3}],2:[function(require,module,exports){
-module.exports=[
-	{
-		"title" : "My First Post",
-		"author": "Paul Martin",
-		"content":"# Hippotaden quod solida\n\n## Non Iliades silva publica ille aeoliam nec\n\nLorem markdownum sanguine pecudes viro, suspiratibus qui proelia dederat iaculo\nvaticinos pavido, attonitae eligit plangens: possit. Non hunc quinque inde\ncoepit sanguinea grates moveant potuit ab haec longo; papilione furori: et\nlacunae quam. Ter mala manus de *deficit* feramus *declivis cavernis* tremens\nferrum feci!\n\n## Faces arboris tangamque non hos arcum\n\nVidentur et [pennas](http://gifctrl.com/), Rhodon in vos pinguia [ultra\nrobore](http://jaspervdj.be/) exspatiata. Petisses ibat, ab est matre interea\ntenet clauduntur matris. Canes promptior faces, consulit at ilice nullis et\nfinibus figuras solet talia trisulcis egesto seu.\n\n## Mente per\n\nVidi Thisbe faciem! Tartara qua dextra studio; meis sacras aevo rerum currus ab\nscintilla et. Tegis vulnera, nec lumina dies deorum inque *audacissimus tantaque\nindicio*. Esse hoc [sed pondus](http://en.wikipedia.org/wiki/Sterling_Archer)\nversae resumere in vellet amissa narres est Iovis, virgine **senectus** sustulit\ndum aura!\n\n    if (speakersYoutubeFile) {\n        localhostCharacterSmishing.virus_pcb_program += formulaHeatWavelength +\n                saas / executableKofficeXhtml(tapePacket, 3, crop);\n        software_leaderboard_ivr += ppcWiki.del(streaming_file, tablet);\n        right_speakers.optical += https.schema(349167, scareware_serp_kilobit,\n                barcraftRayConfiguration) * 1;\n    }\n    cache_ldap_nat.uri_frame = memoryOptic(tutorial, vector + 5 + vlbSeoJumper);\n    if (native + mamp <= xp_fsb_hdv.aspFilePage.vpi(5, scrapingUdpMedia,\n            powerpointAvatar)) {\n        minisite = pda_ups;\n        flatbedPage(hard_memory_friendly + googleLossyPpp, exploitCable);\n        menu = data_icq_sdram.wep(touchscreenNetiquette, scalable, 938830);\n    }\n\n## Non saxa forte ora\n\nArsuros sinus pessima coniunx orbem tempora venistis quaeque silet cepit virque\ngenitoris plausus. Me et lugubris plenis postquam nam quies regalis tu puppim\nmagni dextra; absumitur Cinyphius suae. Non tota infelix succincta: nisi ineunt!\n\n    if (-2) {\n        syn(clockWebPiconet, rssImpactUsb);\n    }\n    isp *= sdk * 3 + -1;\n    clean_log += basic_twitter.kilohertzPrinter(im.intranetHard(\n            viral_impression_moodle, 5) + impact_sampling_input(4, bar));\n    dllShortcutSpreadsheet = ruby - menu;\n    var led = dfs_scraping_spyware * backbone;\n\n## Sacra fixa sed me errandum cumulumque quasi\n\nOmen **moribunda**, ostendere flexi petere *totas* aetheriis longi, ipse.\nSupersunt an nomen, vestras Theron tamen, qui nec debebit, altus vix.\n\nReferre tectoque movet ignes aliqua cum, nec per vale illinc pelle? Refert deme:\nalta operis [squalidus optaris](http://www.reddit.com/r/haskell) ante. Amoris\nunum hunc Lelegeides nomen tantum pronuba aliquando Helicen locuta que oraque\nperque praeacutae. Memor nova tenuata reddere Aonias fecerat ducimus Parnasia\nPelops saeva sed hinc **irata** non hoc. Testataque miserarum urbe cruores\ndomesticus pollice suadent."
-	},
-	{
-		"title" : "test post",
-		"author" : "no one",
-		"content" : "null"
-	}
-]
+GH.write = function(path, content, mode){
+	mode = mode || 33188;
+	local.updates.push({ path : path, mode : mode, content: content.toString()});
+};
 
-},{}],3:[function(require,module,exports){
-module.exports={"post":"<html>\n\t<head>\n\t\t<title>{{ title }}</title>\n\t</head>\n\t<body>\n\t\t<div class=\"title\">\n\t\t\t<h1> {{ title }} </h1>\n\t\t\t<h2> By {{ author }} </h2>\n\t\t</div>\n\t\t<div class=\"content\"> {{{ html }}} </div>\n\t</body>\n</html>\n","home":"<html>\n\t<head>\n\t\t<title> BLOG HOME PAGE </title>\n\t</head>\n\t<body>\n\t<div class=\"posts\">\n\t\t{{#each posts}}\n\t\t<div class=\"post\">\n\t\t\t<h2>{{title}}</h2>\n\t\t\t<h3>Written By: {{author}} </h3>\n\t\t\t<a href=\"posts/{{slug}}.html\">Read More</a>\n\t\t</div>\n\t\t{{/each}}\n\t</div>\n\t</body>\n</html>\n\n"}
-},{}],4:[function(require,module,exports){
-var fs = require ('fs'),
-	handlebars = require('handlebars'),
-	markdown = require('markdown').markdown,
-//	posts = require('./api/posts.json'),
-//	templates = require('./api/templates.json');
-	data = require('./api');
+GH.init = function ( repoName, githubToken ){
+	require('js-github/mixins/github-db')(repo, repoName, githubToken);
+	require('js-git/mixins/create-tree')(repo);
+	require('js-git/mixins/mem-cache')(repo);
+	require('js-git/mixins/read-combiner')(repo);
+	require('js-git/mixins/formats')(repo);
+};
 
-var templates = {};
-
-	for (t in data.templates){
-		templates[t] = handlebars.compile(data.templates[t]);
-	}
-
-
-function slug(title){
-	return title.replace(/[^A-Za-z0-9-]+/g, '-');
+GH.push = function(author, message){
+	var updates = local.updates;
+	console.log(updates);
+	repo.readRef("refs/heads/gh-pages", function(err, head){
+		if (err) {console.log(err);}
+		repo.loadAs("commit", head, function(err, commit){
+			updates.base = commit.tree;
+			repo.createTree(updates, function(err, treeHash){
+				if (err) {console.log(err);}
+				console.log("tree created", treeHash);
+				var commit = {
+					tree   : treeHash, 
+					author : author,
+					parent : head,
+					message: message
+				};
+				console.log(JSON.stringify(commit, null, 2));
+				repo.saveAs("commit", commit, function(err, commitHash){
+					if (err) {
+						console.log(err);
+						return;
+					}
+					console.log("commit hash = ", commitHash);
+					repo.updateRef("refs/heads/gh-pages", commitHash, function(err, newhash){
+						console.log("done.", newhash);
+					});
+				});
+			});
+		});
+	});
 }
 
-for ( var i = 0; i < data.posts.length; i++){
-	var post = data.posts[i];
-	data.posts[i].slug = slug(post.title);
-	data.posts[i].html = markdown.toHTML( post.content );
-	colsole.log("posts/" + post.slug + ".html",  templates['post'](post), 'utf8');
-}
 
-var homePage = templates['home']({posts : data.posts});
-console.log('index.html', homePage, 'utf8');
-
-},{"./api":1,"fs":49,"handlebars":35,"markdown":47}],5:[function(require,module,exports){
+},{"js-git/mixins/create-tree":51,"js-git/mixins/formats":52,"js-git/mixins/mem-cache":53,"js-git/mixins/read-combiner":54,"js-github/mixins/github-db":56}],5:[function(require,module,exports){
 (function (process,__filename){
 /** vim: et:ts=4:sw=4:sts=4
  * @license amdefine 1.0.0 Copyright (c) 2011-2015, The Dojo Foundation All Rights Reserved.
@@ -354,8 +480,442 @@ function amdefine(module, requireFn) {
 
 module.exports = amdefine;
 
-}).call(this,require('_process'),"/node_modules/amdefine/amdefine.js")
-},{"_process":52,"path":51}],6:[function(require,module,exports){
+}).call(this,require('_process'),"/../../node_modules/amdefine/amdefine.js")
+},{"_process":63,"path":62}],6:[function(require,module,exports){
+(function (process){
+"use strict";
+/*global escape, unescape*/
+
+var isNode = typeof process === 'object' &&
+             typeof process.versions === 'object' &&
+             process.versions.node &&
+             process.__atom_type !== "renderer";
+
+if (isNode) {
+  var nodeRequire = require; // Prevent mine.js from seeing this require
+  module.exports = nodeRequire('./bodec-node.js');
+}
+else {
+
+  // This file must be served with UTF-8 encoding for the utf8 codec to work.
+  module.exports = {
+    Binary: Uint8Array,
+    // Utility functions
+    isBinary: isBinary,
+    create: create,
+    join: join,
+
+    // Binary input and output
+    copy: copy,
+    slice: slice,
+
+    // String input and output
+    toRaw: toRaw,
+    fromRaw: fromRaw,
+    toUnicode: toUnicode,
+    fromUnicode: fromUnicode,
+    toHex: toHex,
+    fromHex: fromHex,
+    toBase64: toBase64,
+    fromBase64: fromBase64,
+
+    // Array input and output
+    toArray: toArray,
+    fromArray: fromArray,
+
+    // Raw <-> Hex-encoded codec
+    decodeHex: decodeHex,
+    encodeHex: encodeHex,
+
+    decodeBase64: decodeBase64,
+    encodeBase64: encodeBase64,
+
+    // Unicode <-> Utf8-encoded-raw codec
+    encodeUtf8: encodeUtf8,
+    decodeUtf8: decodeUtf8,
+
+    // Hex <-> Nibble codec
+    nibbleToCode: nibbleToCode,
+    codeToNibble: codeToNibble
+  };
+}
+
+function isBinary(value) {
+  return value &&
+      typeof value === "object" &&
+      value instanceof Uint8Array || value.constructor.name === "Uint8Array";
+}
+
+function create(length) {
+  return new Uint8Array(length);
+}
+
+function join(chunks) {
+  var length = chunks.length;
+  var total = 0;
+  for (var i = 0; i < length; i++) {
+    total += chunks[i].length;
+  }
+  var binary = create(total);
+  var offset = 0;
+  for (i = 0; i < length; i++) {
+    var chunk = chunks[i];
+    copy(chunk, binary, offset);
+    offset += chunk.length;
+  }
+  return binary;
+}
+
+function slice(binary, start, end) {
+  if (end === undefined) {
+    end = binary.length;
+    if (start === undefined) start = 0;
+  }
+  return binary.subarray(start, end);
+}
+
+function copy(source, binary, offset) {
+  var length = source.length;
+  if (offset === undefined) {
+    offset = 0;
+    if (binary === undefined) binary = create(length);
+  }
+  for (var i = 0; i < length; i++) {
+    binary[i + offset] = source[i];
+  }
+  return binary;
+}
+
+// Like slice, but encode as a hex string
+function toHex(binary, start, end) {
+  var hex = "";
+  if (end === undefined) {
+    end = binary.length;
+    if (start === undefined) start = 0;
+  }
+  for (var i = start; i < end; i++) {
+    var byte = binary[i];
+    hex += String.fromCharCode(nibbleToCode(byte >> 4)) +
+           String.fromCharCode(nibbleToCode(byte & 0xf));
+  }
+  return hex;
+}
+
+// Like copy, but decode from a hex string
+function fromHex(hex, binary, offset) {
+  var length = hex.length / 2;
+  if (offset === undefined) {
+    offset = 0;
+    if (binary === undefined) binary = create(length);
+  }
+  var j = 0;
+  for (var i = 0; i < length; i++) {
+    binary[offset + i] = (codeToNibble(hex.charCodeAt(j++)) << 4)
+                       |  codeToNibble(hex.charCodeAt(j++));
+  }
+  return binary;
+}
+
+function toBase64(binary, start, end) {
+  return btoa(toRaw(binary, start, end));
+}
+
+function fromBase64(base64, binary, offset) {
+  return fromRaw(atob(base64), binary, offset);
+}
+
+function nibbleToCode(nibble) {
+  nibble |= 0;
+  return (nibble + (nibble < 10 ? 0x30 : 0x57))|0;
+}
+
+function codeToNibble(code) {
+  code |= 0;
+  return (code - ((code & 0x40) ? 0x57 : 0x30))|0;
+}
+
+function toUnicode(binary, start, end) {
+  return decodeUtf8(toRaw(binary, start, end));
+}
+
+function fromUnicode(unicode, binary, offset) {
+  return fromRaw(encodeUtf8(unicode), binary, offset);
+}
+
+function decodeHex(hex) {
+  var j = 0, l = hex.length;
+  var raw = "";
+  while (j < l) {
+    raw += String.fromCharCode(
+       (codeToNibble(hex.charCodeAt(j++)) << 4)
+      | codeToNibble(hex.charCodeAt(j++))
+    );
+  }
+  return raw;
+}
+
+function encodeHex(raw) {
+  var hex = "";
+  var length = raw.length;
+  for (var i = 0; i < length; i++) {
+    var byte = raw.charCodeAt(i);
+    hex += String.fromCharCode(nibbleToCode(byte >> 4)) +
+           String.fromCharCode(nibbleToCode(byte & 0xf));
+  }
+  return hex;
+}
+
+function decodeBase64(base64) {
+  return atob(base64);
+}
+
+function encodeBase64(raw) {
+  return btoa(raw);
+}
+
+function decodeUtf8(utf8) {
+  return decodeURIComponent(escape(utf8));
+}
+
+function encodeUtf8(unicode) {
+  return unescape(encodeURIComponent(unicode));
+}
+
+function toRaw(binary, start, end) {
+  var raw = "";
+  if (end === undefined) {
+    end = binary.length;
+    if (start === undefined) start = 0;
+  }
+  for (var i = start; i < end; i++) {
+    raw += String.fromCharCode(binary[i]);
+  }
+  return raw;
+}
+
+function fromRaw(raw, binary, offset) {
+  var length = raw.length;
+  if (offset === undefined) {
+    offset = 0;
+    if (binary === undefined) binary = create(length);
+  }
+  for (var i = 0; i < length; i++) {
+    binary[offset + i] = raw.charCodeAt(i);
+  }
+  return binary;
+}
+
+function toArray(binary, start, end) {
+  if (end === undefined) {
+    end = binary.length;
+    if (start === undefined) start = 0;
+  }
+  var length = end - start;
+  var array = new Array(length);
+  for (var i = 0; i < length; i++) {
+    array[i] = binary[i + start];
+  }
+  return array;
+}
+
+function fromArray(array, binary, offset) {
+  var length = array.length;
+  if (offset === undefined) {
+    offset = 0;
+    if (binary === undefined) binary = create(length);
+  }
+  for (var i = 0; i < length; i++) {
+    binary[offset + i] = array[i];
+  }
+  return binary;
+}
+
+}).call(this,require('_process'))
+},{"_process":63}],7:[function(require,module,exports){
+(function (process){
+"use strict";
+
+var isNode = typeof process === 'object' &&
+             typeof process.versions === 'object' &&
+             process.versions.node &&
+             process.__atom_type !== "renderer";
+
+var shared, create, crypto;
+if (isNode) {
+  var nodeRequire = require; // Prevent mine.js from seeing this require
+  crypto = nodeRequire('crypto');
+  create = createNode;
+}
+else {
+  shared = new Uint32Array(80);
+  create = createJs;
+}
+
+
+// Input chunks must be either arrays of bytes or "raw" encoded strings
+module.exports = function sha1(buffer) {
+  if (buffer === undefined) return create(false);
+  var shasum = create(true);
+  shasum.update(buffer);
+  return shasum.digest();
+};
+
+// Use node's openssl bindings when available
+function createNode() {
+  var shasum = crypto.createHash('sha1');
+  return {
+    update: function (buffer) {
+      return shasum.update(buffer);
+    },
+    digest: function () {
+      return shasum.digest('hex');
+    }
+  };
+}
+
+// A pure JS implementation of sha1 for non-node environments.
+function createJs(sync) {
+  var h0 = 0x67452301;
+  var h1 = 0xEFCDAB89;
+  var h2 = 0x98BADCFE;
+  var h3 = 0x10325476;
+  var h4 = 0xC3D2E1F0;
+  // The first 64 bytes (16 words) is the data chunk
+  var block, offset = 0, shift = 24;
+  var totalLength = 0;
+  if (sync) block = shared;
+  else block = new Uint32Array(80);
+
+  return { update: update, digest: digest };
+
+  // The user gave us more data.  Store it!
+  function update(chunk) {
+    if (typeof chunk === "string") return updateString(chunk);
+    var length = chunk.length;
+    totalLength += length * 8;
+    for (var i = 0; i < length; i++) {
+      write(chunk[i]);
+    }
+  }
+
+  function updateString(string) {
+    var length = string.length;
+    totalLength += length * 8;
+    for (var i = 0; i < length; i++) {
+      write(string.charCodeAt(i));
+    }
+  }
+
+
+  function write(byte) {
+    block[offset] |= (byte & 0xff) << shift;
+    if (shift) {
+      shift -= 8;
+    }
+    else {
+      offset++;
+      shift = 24;
+    }
+    if (offset === 16) processBlock();
+  }
+
+  // No more data will come, pad the block, process and return the result.
+  function digest() {
+    // Pad
+    write(0x80);
+    if (offset > 14 || (offset === 14 && shift < 24)) {
+      processBlock();
+    }
+    offset = 14;
+    shift = 24;
+
+    // 64-bit length big-endian
+    write(0x00); // numbers this big aren't accurate in javascript anyway
+    write(0x00); // ..So just hard-code to zero.
+    write(totalLength > 0xffffffffff ? totalLength / 0x10000000000 : 0x00);
+    write(totalLength > 0xffffffff ? totalLength / 0x100000000 : 0x00);
+    for (var s = 24; s >= 0; s -= 8) {
+      write(totalLength >> s);
+    }
+
+    // At this point one last processBlock() should trigger and we can pull out the result.
+    return toHex(h0) +
+           toHex(h1) +
+           toHex(h2) +
+           toHex(h3) +
+           toHex(h4);
+  }
+
+  // We have a full block to process.  Let's do it!
+  function processBlock() {
+    // Extend the sixteen 32-bit words into eighty 32-bit words:
+    for (var i = 16; i < 80; i++) {
+      var w = block[i - 3] ^ block[i - 8] ^ block[i - 14] ^ block[i - 16];
+      block[i] = (w << 1) | (w >>> 31);
+    }
+
+    // log(block);
+
+    // Initialize hash value for this chunk:
+    var a = h0;
+    var b = h1;
+    var c = h2;
+    var d = h3;
+    var e = h4;
+    var f, k;
+
+    // Main loop:
+    for (i = 0; i < 80; i++) {
+      if (i < 20) {
+        f = d ^ (b & (c ^ d));
+        k = 0x5A827999;
+      }
+      else if (i < 40) {
+        f = b ^ c ^ d;
+        k = 0x6ED9EBA1;
+      }
+      else if (i < 60) {
+        f = (b & c) | (d & (b | c));
+        k = 0x8F1BBCDC;
+      }
+      else {
+        f = b ^ c ^ d;
+        k = 0xCA62C1D6;
+      }
+      var temp = (a << 5 | a >>> 27) + f + e + k + (block[i]|0);
+      e = d;
+      d = c;
+      c = (b << 30 | b >>> 2);
+      b = a;
+      a = temp;
+    }
+
+    // Add this chunk's hash to result so far:
+    h0 = (h0 + a) | 0;
+    h1 = (h1 + b) | 0;
+    h2 = (h2 + c) | 0;
+    h3 = (h3 + d) | 0;
+    h4 = (h4 + e) | 0;
+
+    // The block is now reusable.
+    offset = 0;
+    for (i = 0; i < 16; i++) {
+      block[i] = 0;
+    }
+  }
+
+  function toHex(word) {
+    var hex = "";
+    for (var i = 28; i >= 0; i -= 4) {
+      hex += ((word >> i) & 0xf).toString(16);
+    }
+    return hex;
+  }
+
+}
+
+}).call(this,require('_process'))
+},{"_process":63}],8:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -422,7 +982,7 @@ exports['default'] = inst;
 module.exports = exports['default'];
 
 
-},{"./handlebars.runtime":7,"./handlebars/compiler/ast":9,"./handlebars/compiler/base":10,"./handlebars/compiler/compiler":12,"./handlebars/compiler/javascript-compiler":14,"./handlebars/compiler/visitor":17,"./handlebars/no-conflict":31}],7:[function(require,module,exports){
+},{"./handlebars.runtime":9,"./handlebars/compiler/ast":11,"./handlebars/compiler/base":12,"./handlebars/compiler/compiler":14,"./handlebars/compiler/javascript-compiler":16,"./handlebars/compiler/visitor":19,"./handlebars/no-conflict":33}],9:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -491,7 +1051,7 @@ exports['default'] = inst;
 module.exports = exports['default'];
 
 
-},{"./handlebars/base":8,"./handlebars/exception":21,"./handlebars/no-conflict":31,"./handlebars/runtime":32,"./handlebars/safe-string":33,"./handlebars/utils":34}],8:[function(require,module,exports){
+},{"./handlebars/base":10,"./handlebars/exception":23,"./handlebars/no-conflict":33,"./handlebars/runtime":34,"./handlebars/safe-string":35,"./handlebars/utils":36}],10:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -597,7 +1157,7 @@ exports.createFrame = _utils.createFrame;
 exports.logger = _logger2['default'];
 
 
-},{"./decorators":19,"./exception":21,"./helpers":22,"./logger":30,"./utils":34}],9:[function(require,module,exports){
+},{"./decorators":21,"./exception":23,"./helpers":24,"./logger":32,"./utils":36}],11:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -630,7 +1190,7 @@ exports['default'] = AST;
 module.exports = exports['default'];
 
 
-},{}],10:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -680,7 +1240,7 @@ function parse(input, options) {
 }
 
 
-},{"../utils":34,"./helpers":13,"./parser":15,"./whitespace-control":18}],11:[function(require,module,exports){
+},{"../utils":36,"./helpers":15,"./parser":17,"./whitespace-control":20}],13:[function(require,module,exports){
 /* global define */
 'use strict';
 
@@ -848,7 +1408,7 @@ exports['default'] = CodeGen;
 module.exports = exports['default'];
 
 
-},{"../utils":34,"source-map":36}],12:[function(require,module,exports){
+},{"../utils":36,"source-map":38}],14:[function(require,module,exports){
 /* eslint-disable new-cap */
 
 'use strict';
@@ -1422,7 +1982,7 @@ function transformLiteralToPath(sexpr) {
 }
 
 
-},{"../exception":21,"../utils":34,"./ast":9}],13:[function(require,module,exports){
+},{"../exception":23,"../utils":36,"./ast":11}],15:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -1654,7 +2214,7 @@ function preparePartialBlock(open, program, close, locInfo) {
 }
 
 
-},{"../exception":21}],14:[function(require,module,exports){
+},{"../exception":23}],16:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -2782,7 +3342,7 @@ exports['default'] = JavaScriptCompiler;
 module.exports = exports['default'];
 
 
-},{"../base":8,"../exception":21,"../utils":34,"./code-gen":11}],15:[function(require,module,exports){
+},{"../base":10,"../exception":23,"../utils":36,"./code-gen":13}],17:[function(require,module,exports){
 /* istanbul ignore next */
 /* Jison generated parser */
 "use strict";
@@ -3522,7 +4082,7 @@ var handlebars = (function () {
 exports['default'] = handlebars;
 
 
-},{}],16:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 /* eslint-disable new-cap */
 'use strict';
 
@@ -3710,7 +4270,7 @@ PrintVisitor.prototype.HashPair = function (pair) {
 /* eslint-enable new-cap */
 
 
-},{"./visitor":17}],17:[function(require,module,exports){
+},{"./visitor":19}],19:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -3852,7 +4412,7 @@ exports['default'] = Visitor;
 module.exports = exports['default'];
 
 
-},{"../exception":21}],18:[function(require,module,exports){
+},{"../exception":23}],20:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -4075,7 +4635,7 @@ exports['default'] = WhitespaceControl;
 module.exports = exports['default'];
 
 
-},{"./visitor":17}],19:[function(require,module,exports){
+},{"./visitor":19}],21:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -4093,7 +4653,7 @@ function registerDefaultDecorators(instance) {
 }
 
 
-},{"./decorators/inline":20}],20:[function(require,module,exports){
+},{"./decorators/inline":22}],22:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -4124,7 +4684,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../utils":34}],21:[function(require,module,exports){
+},{"../utils":36}],23:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -4166,7 +4726,7 @@ exports['default'] = Exception;
 module.exports = exports['default'];
 
 
-},{}],22:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -4214,7 +4774,7 @@ function registerDefaultHelpers(instance) {
 }
 
 
-},{"./helpers/block-helper-missing":23,"./helpers/each":24,"./helpers/helper-missing":25,"./helpers/if":26,"./helpers/log":27,"./helpers/lookup":28,"./helpers/with":29}],23:[function(require,module,exports){
+},{"./helpers/block-helper-missing":25,"./helpers/each":26,"./helpers/helper-missing":27,"./helpers/if":28,"./helpers/log":29,"./helpers/lookup":30,"./helpers/with":31}],25:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -4255,7 +4815,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../utils":34}],24:[function(require,module,exports){
+},{"../utils":36}],26:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -4351,7 +4911,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../exception":21,"../utils":34}],25:[function(require,module,exports){
+},{"../exception":23,"../utils":36}],27:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -4378,7 +4938,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../exception":21}],26:[function(require,module,exports){
+},{"../exception":23}],28:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -4409,7 +4969,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../utils":34}],27:[function(require,module,exports){
+},{"../utils":36}],29:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -4437,7 +4997,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{}],28:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -4451,7 +5011,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{}],29:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -4486,7 +5046,7 @@ exports['default'] = function (instance) {
 module.exports = exports['default'];
 
 
-},{"../utils":34}],30:[function(require,module,exports){
+},{"../utils":36}],32:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -4535,7 +5095,7 @@ exports['default'] = logger;
 module.exports = exports['default'];
 
 
-},{"./utils":34}],31:[function(require,module,exports){
+},{"./utils":36}],33:[function(require,module,exports){
 (function (global){
 /* global window */
 'use strict';
@@ -4558,7 +5118,7 @@ module.exports = exports['default'];
 
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],32:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -4852,7 +5412,7 @@ function executeDecorators(fn, prog, container, depths, data, blockParams) {
 }
 
 
-},{"./base":8,"./exception":21,"./utils":34}],33:[function(require,module,exports){
+},{"./base":10,"./exception":23,"./utils":36}],35:[function(require,module,exports){
 // Build out our basic SafeString type
 'use strict';
 
@@ -4869,7 +5429,7 @@ exports['default'] = SafeString;
 module.exports = exports['default'];
 
 
-},{}],34:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -4995,7 +5555,7 @@ function appendContextPath(contextPath, id) {
 }
 
 
-},{}],35:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 // USAGE:
 // var handlebars = require('handlebars');
 /* eslint-disable no-var */
@@ -5022,7 +5582,7 @@ if (typeof require !== 'undefined' && require.extensions) {
   require.extensions['.hbs'] = extension;
 }
 
-},{"../dist/cjs/handlebars":6,"../dist/cjs/handlebars/compiler/printer":16,"fs":49}],36:[function(require,module,exports){
+},{"../dist/cjs/handlebars":8,"../dist/cjs/handlebars/compiler/printer":18,"fs":60}],38:[function(require,module,exports){
 /*
  * Copyright 2009-2011 Mozilla Foundation and contributors
  * Licensed under the New BSD license. See LICENSE.txt or:
@@ -5032,7 +5592,7 @@ exports.SourceMapGenerator = require('./source-map/source-map-generator').Source
 exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
 exports.SourceNode = require('./source-map/source-node').SourceNode;
 
-},{"./source-map/source-map-consumer":43,"./source-map/source-map-generator":44,"./source-map/source-node":45}],37:[function(require,module,exports){
+},{"./source-map/source-map-consumer":45,"./source-map/source-map-generator":46,"./source-map/source-node":47}],39:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -5141,7 +5701,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./util":46,"amdefine":5}],38:[function(require,module,exports){
+},{"./util":48,"amdefine":5}],40:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -5289,7 +5849,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./base64":39,"amdefine":5}],39:[function(require,module,exports){
+},{"./base64":41,"amdefine":5}],41:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -5364,7 +5924,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":5}],40:[function(require,module,exports){
+},{"amdefine":5}],42:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -5483,7 +6043,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":5}],41:[function(require,module,exports){
+},{"amdefine":5}],43:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2014 Mozilla Foundation and contributors
@@ -5571,7 +6131,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./util":46,"amdefine":5}],42:[function(require,module,exports){
+},{"./util":48,"amdefine":5}],44:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -5693,7 +6253,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":5}],43:[function(require,module,exports){
+},{"amdefine":5}],45:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -6772,7 +7332,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":37,"./base64-vlq":38,"./binary-search":40,"./quick-sort":42,"./util":46,"amdefine":5}],44:[function(require,module,exports){
+},{"./array-set":39,"./base64-vlq":40,"./binary-search":42,"./quick-sort":44,"./util":48,"amdefine":5}],46:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -7173,7 +7733,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":37,"./base64-vlq":38,"./mapping-list":41,"./util":46,"amdefine":5}],45:[function(require,module,exports){
+},{"./array-set":39,"./base64-vlq":40,"./mapping-list":43,"./util":48,"amdefine":5}],47:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -7589,7 +8149,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./source-map-generator":44,"./util":46,"amdefine":5}],46:[function(require,module,exports){
+},{"./source-map-generator":46,"./util":48,"amdefine":5}],48:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -7961,12 +8521,1285 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":5}],47:[function(require,module,exports){
+},{"amdefine":5}],49:[function(require,module,exports){
+// Not strict mode because it uses octal literals all over.
+module.exports = {
+  isBlob: function (mode) {
+    return (mode & 0140000) === 0100000;
+  },
+  isFile: function (mode) {
+    return (mode & 0160000) === 0100000;
+  },
+  toType: function (mode) {
+    if (mode === 0160000) return "commit";
+    if (mode ===  040000) return "tree";
+    if ((mode & 0140000) === 0100000) return "blob";
+    return "unknown";
+  },
+  tree:    040000,
+  blob:   0100644,
+  file:   0100644,
+  exec:   0100755,
+  sym:    0120000,
+  commit: 0160000
+};
+
+},{}],50:[function(require,module,exports){
+"use strict";
+var bodec = require('bodec');
+var modes = require('./modes');
+
+// (body) -> raw-buffer
+var encoders = exports.encoders = {
+  blob: encodeBlob,
+  tree: encodeTree,
+  commit: encodeCommit,
+  tag: encodeTag
+};
+
+  // ({type:type, body:raw-buffer}) -> buffer
+exports.frame = frame;
+
+// (raw-buffer) -> body
+var decoders = exports.decoders ={
+  blob: decodeBlob,
+  tree: decodeTree,
+  commit: decodeCommit,
+  tag: decodeTag
+};
+
+// (buffer) -> {type:type, body:raw-buffer}
+exports.deframe = deframe;
+
+// Export git style path sort in case it's wanted.
+exports.treeMap = treeMap;
+exports.treeSort = treeSort;
+
+function encodeBlob(body) {
+  if (!bodec.isBinary(body)) throw new TypeError("Blobs must be binary values");
+  return body;
+}
+
+function treeMap(key) {
+  /*jshint validthis:true*/
+  var entry = this[key];
+  return {
+    name: key,
+    mode: entry.mode,
+    hash: entry.hash
+  };
+}
+
+function treeSort(a, b) {
+  var aa = (a.mode === modes.tree) ? a.name + "/" : a.name;
+  var bb = (b.mode === modes.tree) ? b.name + "/" : b.name;
+  return aa > bb ? 1 : aa < bb ? -1 : 0;
+}
+
+function encodeTree(body) {
+  var tree = "";
+  if (Array.isArray(body)) throw new TypeError("Tree must be in object form");
+  var list = Object.keys(body).map(treeMap, body).sort(treeSort);
+  for (var i = 0, l = list.length; i < l; i++) {
+    var entry = list[i];
+    tree += entry.mode.toString(8) + " " + bodec.encodeUtf8(entry.name) +
+            "\0" + bodec.decodeHex(entry.hash);
+  }
+  return bodec.fromRaw(tree);
+}
+
+function encodeTag(body) {
+  var str = "object " + body.object +
+    "\ntype " + body.type +
+    "\ntag " + body.tag +
+    "\ntagger " + formatPerson(body.tagger) +
+    "\n\n" + body.message;
+  return bodec.fromUnicode(str);
+}
+
+function encodeCommit(body) {
+  var str = "tree " + body.tree;
+  for (var i = 0, l = body.parents.length; i < l; ++i) {
+    str += "\nparent " + body.parents[i];
+  }
+  str += "\nauthor " + formatPerson(body.author) +
+         "\ncommitter " + formatPerson(body.committer) +
+         "\n\n" + body.message;
+  return bodec.fromUnicode(str);
+}
+
+
+function formatPerson(person) {
+  return safe(person.name) +
+    " <" + safe(person.email) + "> " +
+    formatDate(person.date);
+}
+
+function safe(string) {
+  return string.replace(/(?:^[\.,:;<>"']+|[\0\n<>]+|[\.,:;<>"']+$)/gm, "");
+}
+
+function two(num) {
+  return (num < 10 ? "0" : "") + num;
+}
+
+function formatDate(date) {
+  var seconds, offset;
+  if (date.seconds) {
+    seconds = date.seconds;
+    offset = date.offset;
+  }
+  // Also accept Date instances
+  else {
+    seconds = Math.floor(date.getTime() / 1000);
+    offset = date.getTimezoneOffset();
+  }
+  var neg = "+";
+  if (offset <= 0) offset = -offset;
+  else neg = "-";
+  offset = neg + two(Math.floor(offset / 60)) + two(offset % 60);
+  return seconds + " " + offset;
+}
+
+function frame(obj) {
+  var type = obj.type;
+  var body = obj.body;
+  if (!bodec.isBinary(body)) body = encoders[type](body);
+  return bodec.join([
+    bodec.fromRaw(type + " " + body.length + "\0"),
+    body
+  ]);
+}
+
+function decodeBlob(body) {
+  return body;
+}
+
+function decodeTree(body) {
+  var i = 0;
+  var length = body.length;
+  var start;
+  var mode;
+  var name;
+  var hash;
+  var tree = {};
+  while (i < length) {
+    start = i;
+    i = indexOf(body, 0x20, start);
+    if (i < 0) throw new SyntaxError("Missing space");
+    mode = parseOct(body, start, i++);
+    start = i;
+    i = indexOf(body, 0x00, start);
+    name = bodec.toUnicode(body, start, i++);
+    hash = bodec.toHex(body, i, i += 20);
+    tree[name] = {
+      mode: mode,
+      hash: hash
+    };
+  }
+  return tree;
+}
+
+function decodeCommit(body) {
+  var i = 0;
+  var start;
+  var key;
+  var parents = [];
+  var commit = {
+    tree: "",
+    parents: parents,
+    author: "",
+    committer: "",
+    message: ""
+  };
+  while (body[i] !== 0x0a) {
+    start = i;
+    i = indexOf(body, 0x20, start);
+    if (i < 0) throw new SyntaxError("Missing space");
+    key = bodec.toRaw(body, start, i++);
+    start = i;
+    i = indexOf(body, 0x0a, start);
+    if (i < 0) throw new SyntaxError("Missing linefeed");
+    var value = bodec.toUnicode(body, start, i++);
+    if (key === "parent") {
+      parents.push(value);
+    }
+    else {
+      if (key === "author" || key === "committer") {
+        value = decodePerson(value);
+      }
+      commit[key] = value;
+    }
+  }
+  i++;
+  commit.message = bodec.toUnicode(body, i, body.length);
+  return commit;
+}
+
+function decodeTag(body) {
+  var i = 0;
+  var start;
+  var key;
+  var tag = {};
+  while (body[i] !== 0x0a) {
+    start = i;
+    i = indexOf(body, 0x20, start);
+    if (i < 0) throw new SyntaxError("Missing space");
+    key = bodec.toRaw(body, start, i++);
+    start = i;
+    i = indexOf(body, 0x0a, start);
+    if (i < 0) throw new SyntaxError("Missing linefeed");
+    var value = bodec.toUnicode(body, start, i++);
+    if (key === "tagger") value = decodePerson(value);
+    tag[key] = value;
+  }
+  i++;
+  tag.message = bodec.toUnicode(body, i, body.length);
+  return tag;
+}
+
+function decodePerson(string) {
+  var match = string.match(/^([^<]*) <([^>]*)> ([^ ]*) (.*)$/);
+  if (!match) throw new Error("Improperly formatted person string");
+  return {
+    name: match[1],
+    email: match[2],
+    date: {
+      seconds: parseInt(match[3], 10),
+      offset: parseInt(match[4], 10) / 100 * -60
+    }
+  };
+}
+
+function deframe(buffer, decode) {
+  var space = indexOf(buffer, 0x20);
+  if (space < 0) throw new Error("Invalid git object buffer");
+  var nil = indexOf(buffer, 0x00, space);
+  if (nil < 0) throw new Error("Invalid git object buffer");
+  var body = bodec.slice(buffer, nil + 1);
+  var size = parseDec(buffer, space + 1, nil);
+  if (size !== body.length) throw new Error("Invalid body length.");
+  var type = bodec.toRaw(buffer, 0, space);
+  return {
+    type: type,
+    body: decode ? decoders[type](body) : body
+  };
+}
+
+function indexOf(buffer, byte, i) {
+  i |= 0;
+  var length = buffer.length;
+  for (;;i++) {
+    if (i >= length) return -1;
+    if (buffer[i] === byte) return i;
+  }
+}
+
+function parseOct(buffer, start, end) {
+  var val = 0;
+  while (start < end) {
+    val = (val << 3) + buffer[start++] - 0x30;
+  }
+  return val;
+}
+
+function parseDec(buffer, start, end) {
+  var val = 0;
+  while (start < end) {
+    val = val * 10 + buffer[start++] - 0x30;
+  }
+  return val;
+}
+
+},{"./modes":49,"bodec":6}],51:[function(require,module,exports){
+"use strict";
+
+var modes = require('../lib/modes.js');
+
+module.exports = function (repo) {
+  repo.createTree = createTree;
+
+  function createTree(entries, callback) {
+    if (!callback) return createTree.bind(null, entries);
+    callback = singleCall(callback);
+    if (!Array.isArray(entries)) {
+      entries = Object.keys(entries).map(function (path) {
+        var entry = entries[path];
+        entry.path = path;
+        return entry;
+      });
+    }
+
+    // Tree paths that we need loaded
+    var toLoad = {};
+    function markTree(path) {
+      while(true) {
+        if (toLoad[path]) return;
+        toLoad[path] = true;
+        trees[path] = {
+          add: [],
+          del: [],
+          tree: {}
+        };
+        if (!path) break;
+        path = path.substring(0, path.lastIndexOf("/"));
+      }
+    }
+
+    // Commands to run organized by tree path
+    var trees = {};
+
+    // Counter for parallel I/O operations
+    var left = 1; // One extra counter to protect again zalgo cache callbacks.
+
+    // First pass, stubs out the trees structure, sorts adds from deletes,
+    // and saves any inline content blobs.
+    entries.forEach(function (entry) {
+      var index = entry.path.lastIndexOf("/");
+      var parentPath = entry.path.substr(0, index);
+      var name = entry.path.substr(index + 1);
+      markTree(parentPath);
+      var tree = trees[parentPath];
+      var adds = tree.add;
+      var dels = tree.del;
+
+      if (!entry.mode) {
+        dels.push(name);
+        return;
+      }
+      var add = {
+        name: name,
+        mode: entry.mode,
+        hash: entry.hash
+      };
+      adds.push(add);
+      if (entry.hash) return;
+      left++;
+      repo.saveAs("blob", entry.content, function (err, hash) {
+        if (err) return callback(err);
+        add.hash = hash;
+        check();
+      });
+    });
+
+    // Preload the base trees
+    if (entries.base) loadTree("", entries.base);
+
+    // Check just in case there was no IO to perform
+    check();
+
+    function loadTree(path, hash) {
+      left++;
+      delete toLoad[path];
+      repo.loadAs("tree", hash, function (err, tree) {
+        if (err) return callback(err);
+        trees[path].tree = tree;
+        Object.keys(tree).forEach(function (name) {
+          var childPath = path ? path + "/" + name : name;
+          if (toLoad[childPath]) loadTree(childPath, tree[name].hash);
+        });
+        check();
+      });
+    }
+
+    function check() {
+      if (--left) return;
+      findLeaves().forEach(processLeaf);
+    }
+
+    function processLeaf(path) {
+      var entry = trees[path];
+      delete trees[path];
+      var tree = entry.tree;
+      entry.del.forEach(function (name) {
+        delete tree[name];
+      });
+      entry.add.forEach(function (item) {
+        tree[item.name] = {
+          mode: item.mode,
+          hash: item.hash
+        };
+      });
+      left++;
+      repo.saveAs("tree", tree, function (err, hash, tree) {
+        if (err) return callback(err);
+        if (!path) return callback(null, hash, tree);
+        var index = path.lastIndexOf("/");
+        var parentPath = path.substring(0, index);
+        var name = path.substring(index + 1);
+        trees[parentPath].add.push({
+          name: name,
+          mode: modes.tree,
+          hash: hash
+        });
+        if (--left) return;
+        findLeaves().forEach(processLeaf);
+      });
+    }
+
+    function findLeaves() {
+      var paths = Object.keys(trees);
+      var parents = {};
+      paths.forEach(function (path) {
+        if (!path) return;
+        var parent = path.substring(0, path.lastIndexOf("/"));
+        parents[parent] = true;
+      });
+      return paths.filter(function (path) {
+        return !parents[path];
+      });
+    }
+  }
+};
+
+function singleCall(callback) {
+  var done = false;
+  return function () {
+    if (done) return console.warn("Discarding extra callback");
+    done = true;
+    return callback.apply(this, arguments);
+  };
+}
+
+},{"../lib/modes.js":49}],52:[function(require,module,exports){
+"use strict";
+
+var bodec = require('bodec');
+var treeMap = require('../lib/object-codec').treeMap;
+
+module.exports = function (repo) {
+  var loadAs = repo.loadAs;
+  repo.loadAs = newLoadAs;
+  var saveAs = repo.saveAs;
+  repo.saveAs = newSaveAs;
+
+  function newLoadAs(type, hash, callback) {
+    if (!callback) return newLoadAs.bind(repo, type, hash);
+    var realType = type === "text" ? "blob":
+                   type === "array" ? "tree" : type;
+    return loadAs.call(repo, realType, hash, onLoad);
+
+    function onLoad(err, body, hash) {
+      if (body === undefined) return callback(err);
+      if (type === "text") body = bodec.toUnicode(body);
+      if (type === "array") body = toArray(body);
+      return callback(err, body, hash);
+    }
+  }
+
+  function newSaveAs(type, body, callback) {
+    if (!callback) return newSaveAs.bind(repo, type, body);
+    type = type === "text" ? "blob":
+           type === "array" ? "tree" : type;
+    if (type === "blob") {
+      if (typeof body === "string") {
+        body = bodec.fromUnicode(body);
+      }
+    }
+    else if (type === "tree") {
+      body = normalizeTree(body);
+    }
+    else if (type === "commit") {
+      body = normalizeCommit(body);
+    }
+    else if (type === "tag") {
+      body = normalizeTag(body);
+    }
+    return saveAs.call(repo, type, body, callback);
+  }
+
+};
+
+function toArray(tree) {
+  return Object.keys(tree).map(treeMap, tree);
+}
+
+function normalizeTree(body) {
+  var type = body && typeof body;
+  if (type !== "object") {
+    throw new TypeError("Tree body must be array or object");
+  }
+  var tree = {}, i, l, entry;
+  // If array form is passed in, convert to object form.
+  if (Array.isArray(body)) {
+    for (i = 0, l = body.length; i < l; i++) {
+      entry = body[i];
+      tree[entry.name] = {
+        mode: entry.mode,
+        hash: entry.hash
+      };
+    }
+  }
+  else {
+    var names = Object.keys(body);
+    for (i = 0, l = names.length; i < l; i++) {
+      var name = names[i];
+      entry = body[name];
+      tree[name] = {
+        mode: entry.mode,
+        hash: entry.hash
+      };
+    }
+  }
+  return tree;
+}
+
+function normalizeCommit(body) {
+  if (!body || typeof body !== "object") {
+    throw new TypeError("Commit body must be an object");
+  }
+  if (!(body.tree && body.author && body.message)) {
+    throw new TypeError("Tree, author, and message are required for commits");
+  }
+  var parents = body.parents || (body.parent ? [ body.parent ] : []);
+  if (!Array.isArray(parents)) {
+    throw new TypeError("Parents must be an array");
+  }
+  var author = normalizePerson(body.author);
+  var committer = body.committer ? normalizePerson(body.committer) : author;
+  return {
+    tree: body.tree,
+    parents: parents,
+    author: author,
+    committer: committer,
+    message: body.message
+  };
+}
+
+function normalizeTag(body) {
+  if (!body || typeof body !== "object") {
+    throw new TypeError("Tag body must be an object");
+  }
+  if (!(body.object && body.type && body.tag && body.tagger && body.message)) {
+    throw new TypeError("Object, type, tag, tagger, and message required");
+  }
+  return {
+    object: body.object,
+    type: body.type,
+    tag: body.tag,
+    tagger: normalizePerson(body.tagger),
+    message: body.message
+  };
+}
+
+function normalizePerson(person) {
+  if (!person || typeof person !== "object") {
+    throw new TypeError("Person must be an object");
+  }
+  if (!person.name || !person.email) {
+    throw new TypeError("Name and email are required for person fields");
+  }
+  return {
+    name: person.name,
+    email: person.email,
+    date: person.date || new Date()
+  };
+}
+
+},{"../lib/object-codec":50,"bodec":6}],53:[function(require,module,exports){
+"use strict";
+
+var encoders = require('../lib/object-codec').encoders;
+var decoders = require('../lib/object-codec').decoders;
+var Binary = require('bodec').Binary;
+
+var cache = memCache.cache = {};
+module.exports = memCache;
+
+function memCache(repo) {
+  var loadAs = repo.loadAs;
+  repo.loadAs = loadAsCached;
+  function loadAsCached(type, hash, callback) {
+    if (!callback) return loadAsCached.bind(this, type, hash);
+    if (hash in cache) return callback(null, dupe(type, cache[hash]), hash);
+    loadAs.call(repo, type, hash, function (err, value) {
+      if (value === undefined) return callback(err);
+      if (type !== "blob" || value.length < 100) {
+        cache[hash] = dupe(type, value);
+      }
+      return callback.apply(this, arguments);
+    });
+  }
+
+  var saveAs = repo.saveAs;
+  repo.saveAs = saveAsCached;
+  function saveAsCached(type, value, callback) {
+    if (!callback) return saveAsCached.bind(this, type, value);
+    value = dupe(type, value);
+    saveAs.call(repo, type, value, function (err, hash) {
+      if (err) return callback(err);
+      if (type !== "blob" || value.length < 100) {
+        cache[hash] = value;
+      }
+      return callback(null, hash, value);
+    });
+  }
+}
+function dupe(type, value) {
+  if (type === "blob") {
+    if (type.length >= 100) return value;
+    return new Binary(value);
+  }
+  return decoders[type](encoders[type](value));
+}
+
+function deepFreeze(obj) {
+  Object.freeze(obj);
+  Object.keys(obj).forEach(function (key) {
+    var value = obj[key];
+    if (typeof value === "object") deepFreeze(value);
+  });
+}
+
+},{"../lib/object-codec":50,"bodec":6}],54:[function(require,module,exports){
+"use strict";
+
+// This replaces loadAs with a version that batches concurrent requests for
+// the same hash.
+module.exports = function (repo) {
+  var pendingReqs = {};
+
+  var loadAs = repo.loadAs;
+  repo.loadAs = newLoadAs;
+
+  function newLoadAs(type, hash, callback) {
+    if (!callback) return newLoadAs.bind(null, type, hash);
+    var list = pendingReqs[hash];
+    if (list) {
+      if (list.type !== type) callback(new Error("Type mismatch"));
+      else list.push(callback);
+      return;
+    }
+    list = pendingReqs[hash] = [callback];
+    list.type = type;
+    loadAs.call(repo, type, hash, function () {
+      delete pendingReqs[hash];
+      for (var i = 0, l = list.length; i < l; i++) {
+        list[i].apply(this, arguments);
+      }
+    });
+  }
+};
+
+},{}],55:[function(require,module,exports){
+(function (process){
+"use strict";
+
+var isNode = typeof process === 'object' &&
+             typeof process.versions === 'object' &&
+             process.versions.node &&
+             process.__atom_type !== "renderer";
+
+// Node.js https module
+if (isNode) {
+  var nodeRequire = require; // Prevent mine.js from seeing this require
+  module.exports = nodeRequire('./xhr-node.js');
+}
+
+// Browser XHR
+else {
+  module.exports = function (root, accessToken) {
+    var timeout = 2000;
+    return request;
+
+    function request(method, url, body, callback) {
+      if (typeof body === "function") {
+        callback = body;
+        body = undefined;
+      }
+      else if (!callback) return request.bind(null, method, url, body);
+      url = url.replace(":root", root);
+      var done = false;
+      var json;
+      var xhr = new XMLHttpRequest();
+      xhr.timeout = timeout;
+      xhr.open(method, 'https://api.github.com' + url, true);
+      xhr.setRequestHeader("Authorization", "token " + accessToken);
+      if (body) {
+        try { json = JSON.stringify(body); }
+        catch (err) { return callback(err); }
+      }
+      xhr.ontimeout = onTimeout;
+      xhr.onerror = function() {
+        callback(new Error("Error requesting " + url));
+      };
+      xhr.onreadystatechange = onReadyStateChange;
+      xhr.send(json);
+
+      function onReadyStateChange() {
+        if (done) return;
+        if (xhr.readyState !== 4) return;
+        // Give onTimeout a chance to run first if that's the reason status is 0.
+        if (!xhr.status) return setTimeout(onReadyStateChange, 0);
+        done = true;
+        var response = {message:xhr.responseText};
+        if (xhr.responseText){
+          try { response = JSON.parse(xhr.responseText); }
+          catch (err) {}
+        }
+        xhr.body = response;
+        return callback(null, xhr, response);
+      }
+
+      function onTimeout() {
+        if (done) return;
+        if (timeout < 8000) {
+          timeout *= 2;
+          return request(method, url, body, callback);
+        }
+        done = true;
+        callback(new Error("Timeout requesting " + url));
+      }
+    }
+  };
+}
+
+}).call(this,require('_process'))
+},{"_process":63}],56:[function(require,module,exports){
+"use strict";
+
+var modes = require('js-git/lib/modes');
+var xhr = require('../lib/xhr');
+var bodec = require('bodec');
+var sha1 = require('git-sha1');
+var frame = require('js-git/lib/object-codec').frame;
+
+var modeToType = {
+  "040000": "tree",
+  "100644": "blob",  // normal file
+  "100755": "blob",  // executable file
+  "120000": "blob",  // symlink
+  "160000": "commit" // gitlink
+};
+
+var encoders = {
+  commit: encodeCommit,
+  tag: encodeTag,
+  tree: encodeTree,
+  blob: encodeBlob
+};
+
+var decoders = {
+  commit: decodeCommit,
+  tag: decodeTag,
+  tree: decodeTree,
+  blob: decodeBlob,
+};
+
+var typeCache = {};
+
+// Precompute hashes for empty blob and empty tree since github won't
+var empty = bodec.create(0);
+var emptyBlob = sha1(frame({ type: "blob", body: empty }));
+var emptyTree = sha1(frame({ type: "tree", body: empty }));
+
+// Implement the js-git object interface using github APIs
+module.exports = function (repo, root, accessToken) {
+
+  var apiRequest = xhr(root, accessToken);
+
+  repo.loadAs = loadAs;         // (type, hash) -> value, hash
+  repo.saveAs = saveAs;         // (type, value) -> hash, value
+  repo.readRef = readRef;       // (ref) -> hash
+  repo.updateRef = updateRef;   // (ref, hash) -> hash
+  repo.createTree = createTree; // (entries) -> hash, tree
+  repo.hasHash = hasHash;
+
+  function loadAs(type, hash, callback) {
+    if (!callback) return loadAs.bind(repo, type, hash);
+    // Github doesn't like empty trees, but we know them already.
+    if (type === "tree" && hash === emptyTree) return callback(null, {}, hash);
+    apiRequest("GET", "/repos/:root/git/" + type + "s/" + hash, onValue);
+
+    function onValue(err, xhr, result) {
+      if (err) return callback(err);
+      if (xhr.status < 200 || xhr.status >= 500) {
+        return callback(new Error("Invalid HTTP response: " + xhr.statusCode + " " + result.message));
+      }
+      if (xhr.status >= 300 && xhr.status < 500) return callback();
+      var body;
+      try { body = decoders[type].call(repo, result); }
+      catch (err) { return callback(err); }
+      if (hashAs(type, body) !== hash) {
+        if (fixDate(type, body, hash)) console.log(type + " repaired", hash);
+        else console.warn("Unable to repair " + type, hash);
+      }
+      typeCache[hash] = type;
+      return callback(null, body, hash);
+    }
+  }
+
+  function hasHash(hash, callback) {
+    if (!callback) return hasHash.bind(repo, hash);
+    var type = typeCache[hash];
+    var types = type ? [type] : ["tag", "commit", "tree", "blob"];
+    start();
+    function start() {
+      type = types.pop();
+      if (!type) return callback(null, false);
+      apiRequest("GET", "/repos/:root/git/" + type + "s/" + hash, onValue);
+    }
+
+    function onValue(err, xhr, result) {
+      if (err) return callback(err);
+      if (xhr.status < 200 || xhr.status >= 500) {
+        return callback(new Error("Invalid HTTP response: " + xhr.statusCode + " " + result.message));
+      }
+      if (xhr.status >= 300 && xhr.status < 500) return start();
+      typeCache[hash] = type;
+      callback(null, true);
+    }
+  }
+
+  function saveAs(type, body, callback) {
+    if (!callback) return saveAs.bind(repo, type, body);
+    var hash;
+    try {
+      hash = hashAs(type, body);
+    }
+    catch (err) {
+      return callback(err);
+    }
+    typeCache[hash] = type;
+    repo.hasHash(hash, function (err, has) {
+      if (err) return callback(err);
+      if (has) return callback(null, hash, body);
+
+      var request;
+      try {
+        request = encoders[type](body);
+      }
+      catch (err) {
+        return callback(err);
+      }
+
+      // Github doesn't allow creating empty trees.
+      if (type === "tree" && request.tree.length === 0) {
+        return callback(null, emptyTree, body);
+      }
+      return apiRequest("POST", "/repos/:root/git/" + type + "s", request, onWrite);
+
+    });
+
+    function onWrite(err, xhr, result) {
+      if (err) return callback(err);
+      if (xhr.status < 200 || xhr.status >= 300) {
+        return callback(new Error("Invalid HTTP response: " + xhr.status + " " + result.message));
+      }
+      return callback(null, result.sha, body);
+    }
+  }
+
+  // Create a tree with optional deep paths and create new blobs.
+  // Entries is an array of {mode, path, hash|content}
+  // Also deltas can be specified by setting entries.base to the hash of a tree
+  // in delta mode, entries can be removed by specifying just {path}
+  function createTree(entries, callback) {
+    if (!callback) return createTree.bind(repo, entries);
+    var toDelete = entries.base && entries.filter(function (entry) {
+      return !entry.mode;
+    }).map(function (entry) {
+      return entry.path;
+    });
+    var toCreate = entries.filter(function (entry) {
+      return bodec.isBinary(entry.content);
+    });
+
+    if (!toCreate.length) return next();
+    var done = false;
+    var left = entries.length;
+    toCreate.forEach(function (entry) {
+      repo.saveAs("blob", entry.content, function (err, hash) {
+        if (done) return;
+        if (err) {
+          done = true;
+          return callback(err);
+        }
+        delete entry.content;
+        entry.hash = hash;
+        left--;
+        if (!left) next();
+      });
+    });
+
+    function next(err) {
+      if (err) return callback(err);
+      if (toDelete && toDelete.length) {
+        return slowUpdateTree(entries, toDelete, callback);
+      }
+      return fastUpdateTree(entries, callback);
+    }
+  }
+
+  function fastUpdateTree(entries, callback) {
+    var request = { tree: entries.map(mapTreeEntry) };
+    if (entries.base) request.base_tree = entries.base;
+
+    apiRequest("POST", "/repos/:root/git/trees", request, onWrite);
+
+    function onWrite(err, xhr, result) {
+      if (err) return callback(err);
+      if (xhr.status < 200 || xhr.status >= 300) {
+        return callback(new Error("Invalid HTTP response: " + xhr.status + " " + result.message));
+      }
+      return callback(null, result.sha, decoders.tree(result));
+    }
+  }
+
+  // Github doesn't support deleting entries via the createTree API, so we
+  // need to manually create those affected trees and modify the request.
+  function slowUpdateTree(entries, toDelete, callback) {
+    callback = singleCall(callback);
+    var root = entries.base;
+
+    var left = 0;
+
+    // Calculate trees that need to be re-built and save any provided content.
+    var parents = {};
+    toDelete.forEach(function (path) {
+      var parentPath = path.substr(0, path.lastIndexOf("/"));
+      var parent = parents[parentPath] || (parents[parentPath] = {
+        add: {}, del: []
+      });
+      var name = path.substr(path.lastIndexOf("/") + 1);
+      parent.del.push(name);
+    });
+    var other = entries.filter(function (entry) {
+      if (!entry.mode) return false;
+      var parentPath = entry.path.substr(0, entry.path.lastIndexOf("/"));
+      var parent = parents[parentPath];
+      if (!parent) return true;
+      var name = entry.path.substr(entry.path.lastIndexOf("/") + 1);
+      if (entry.hash) {
+        parent.add[name] = {
+          mode: entry.mode,
+          hash: entry.hash
+        };
+        return false;
+      }
+      left++;
+      repo.saveAs("blob", entry.content, function(err, hash) {
+        if (err) return callback(err);
+        parent.add[name] = {
+          mode: entry.mode,
+          hash: hash
+        };
+        if (!--left) onParents();
+      });
+      return false;
+    });
+    if (!left) onParents();
+
+    function onParents() {
+      Object.keys(parents).forEach(function (parentPath) {
+        left++;
+        // TODO: remove this dependency on pathToEntry
+        repo.pathToEntry(root, parentPath, function (err, entry) {
+          if (err) return callback(err);
+          var tree = entry.tree;
+          var commands = parents[parentPath];
+          commands.del.forEach(function (name) {
+            delete tree[name];
+          });
+          for (var name in commands.add) {
+            tree[name] = commands.add[name];
+          }
+          repo.saveAs("tree", tree, function (err, hash, tree) {
+            if (err) return callback(err);
+            other.push({
+              path: parentPath,
+              hash: hash,
+              mode: modes.tree
+            });
+            if (!--left) {
+              other.base = entries.base;
+              if (other.length === 1 && other[0].path === "") {
+                return callback(null, hash, tree);
+              }
+              fastUpdateTree(other, callback);
+            }
+          });
+        });
+      });
+    }
+  }
+
+
+  function readRef(ref, callback) {
+    if (!callback) return readRef.bind(repo, ref);
+    if (ref === "HEAD") ref = "refs/heads/master";
+    if (!(/^refs\//).test(ref)) {
+      return callback(new TypeError("Invalid ref: " + ref));
+    }
+    return apiRequest("GET", "/repos/:root/git/" + ref, onRef);
+
+    function onRef(err, xhr, result) {
+      if (err) return callback(err);
+      if (xhr.status === 404) return callback();
+      if (xhr.status < 200 || xhr.status >= 300) {
+        return callback(new Error("Invalid HTTP response: " + xhr.status + " " + result.message));
+      }
+      return callback(null, result.object.sha);
+    }
+  }
+
+  function updateRef(ref, hash, callback, force) {
+    if (!callback) return updateRef.bind(repo, ref, hash);
+    if (!(/^refs\//).test(ref)) {
+      return callback(new Error("Invalid ref: " + ref));
+    }
+    return apiRequest("PATCH", "/repos/:root/git/" + ref, {
+      sha: hash,
+      force: !!force
+    }, onResult);
+
+    function onResult(err, xhr, result) {
+      if (err) return callback(err);
+      if (xhr.status === 422 && result.message === "Reference does not exist") {
+        return apiRequest("POST", "/repos/:root/git/refs", {
+          ref: ref,
+          sha: hash
+        }, onResult);
+      }
+      if (xhr.status < 200 || xhr.status >= 300) {
+        return callback(new Error("Invalid HTTP response: " + xhr.status + " " + result.message));
+      }
+      if (err) return callback(err);
+      callback(null, hash);
+    }
+
+  }
+
+};
+
+// GitHub has a nasty habit of stripping whitespace from messages and losing
+// the timezone.  This information is required to make our hashes match up, so
+// we guess it by mutating the value till the hash matches.
+// If we're unable to match, we will just force the hash when saving to the cache.
+function fixDate(type, value, hash) {
+  if (type !== "commit" && type !== "tag") return;
+  // Add up to 3 extra newlines and try all 30-minutes timezone offsets.
+  var clone = JSON.parse(JSON.stringify(value));
+  for (var x = 0; x < 3; x++) {
+    for (var i = -720; i < 720; i += 30) {
+      if (type === "commit") {
+        clone.author.date.offset = i;
+        clone.committer.date.offset = i;
+      }
+      else if (type === "tag") {
+        clone.tagger.date.offset = i;
+      }
+      if (hash !== hashAs(type, clone)) continue;
+      // Apply the changes and return.
+      value.message = clone.message;
+      if (type === "commit") {
+        value.author.date.offset = clone.author.date.offset;
+        value.committer.date.offset = clone.committer.date.offset;
+      }
+      else if (type === "tag") {
+        value.tagger.date.offset = clone.tagger.date.offset;
+      }
+      return true;
+    }
+    clone.message += "\n";
+  }
+  return false;
+}
+
+function mapTreeEntry(entry) {
+  if (!entry.mode) throw new TypeError("Invalid entry");
+  var mode = modeToString(entry.mode);
+  var item = {
+    path: entry.path,
+    mode: mode,
+    type: modeToType[mode]
+  };
+  // Magic hash for empty file since github rejects empty contents.
+  if (entry.content === "") entry.hash = emptyBlob;
+
+  if (entry.hash) item.sha = entry.hash;
+  else item.content = entry.content;
+  return  item;
+}
+
+function encodeCommit(commit) {
+  var out = {};
+  out.message = commit.message;
+  out.tree = commit.tree;
+  if (commit.parents) out.parents = commit.parents;
+  else if (commit.parent) out.parents = [commit.parent];
+  else commit.parents = [];
+  if (commit.author) out.author = encodePerson(commit.author);
+  if (commit.committer) out.committer = encodePerson(commit.committer);
+  return out;
+}
+
+function encodeTag(tag) {
+  return {
+    tag: tag.tag,
+    message: tag.message,
+    object: tag.object,
+    tagger: encodePerson(tag.tagger)
+  };
+}
+
+function encodePerson(person) {
+  return {
+    name: person.name,
+    email: person.email,
+    date: encodeDate(person.date)
+  };
+}
+
+function encodeTree(tree) {
+  return {
+    tree: Object.keys(tree).map(function (name) {
+      var entry = tree[name];
+      var mode = modeToString(entry.mode);
+      return {
+        path: name,
+        mode: mode,
+        type: modeToType[mode],
+        sha: entry.hash
+      };
+    })
+  };
+}
+
+function encodeBlob(blob) {
+  if (typeof blob === "string") return {
+    content: bodec.encodeUtf8(blob),
+    encoding: "utf-8"
+  };
+  if (bodec.isBinary(blob)) return {
+    content: bodec.toBase64(blob),
+    encoding: "base64"
+  };
+  throw new TypeError("Invalid blob type, must be binary or string");
+}
+
+function modeToString(mode) {
+  var string = mode.toString(8);
+  // Github likes all modes to be 6 chars long
+  if (string.length === 5) string = "0" + string;
+  return string;
+}
+
+function decodeCommit(result) {
+  return {
+    tree: result.tree.sha,
+    parents: result.parents.map(function (object) {
+      return object.sha;
+    }),
+    author: pickPerson(result.author),
+    committer: pickPerson(result.committer),
+    message: result.message
+  };
+}
+
+function decodeTag(result) {
+  return {
+    object: result.object.sha,
+    type: result.object.type,
+    tag: result.tag,
+    tagger: pickPerson(result.tagger),
+    message: result.message
+  };
+}
+
+function decodeTree(result) {
+  var tree = {};
+  result.tree.forEach(function (entry) {
+    tree[entry.path] = {
+      mode: parseInt(entry.mode, 8),
+      hash: entry.sha
+    };
+  });
+  return tree;
+}
+
+function decodeBlob(result) {
+  if (result.encoding === 'base64') {
+    return bodec.fromBase64(result.content.replace(/\n/g, ''));
+  }
+  if (result.encoding === 'utf-8') {
+    return bodec.fromUtf8(result.content);
+  }
+  throw new Error("Unknown blob encoding: " + result.encoding);
+}
+
+function pickPerson(person) {
+  return {
+    name: person.name,
+    email: person.email,
+    date: parseDate(person.date)
+  };
+}
+
+function parseDate(string) {
+  // TODO: test this once GitHub adds timezone information
+  var match = string.match(/(-?)([0-9]{2}):([0-9]{2})$/);
+  var date = new Date(string);
+  var timezoneOffset = 0;
+  if (match) {
+    timezoneOffset = (match[1] === "-" ? 1 : -1) * (
+      parseInt(match[2], 10) * 60 + parseInt(match[3], 10)
+    );
+  }
+  return {
+    seconds: date.valueOf() / 1000,
+    offset: timezoneOffset
+  };
+}
+
+function encodeDate(date) {
+  var seconds = date.seconds - (date.offset) * 60;
+  var d = new Date(seconds * 1000);
+  var string = d.toISOString();
+  var hours = (date.offset / 60)|0;
+  var minutes = date.offset % 60;
+  string = string.substring(0, string.lastIndexOf(".")) +
+    (date.offset > 0 ? "-" : "+") +
+    twoDigit(hours) + ":" + twoDigit(minutes);
+  return string;
+}
+
+// Run some quick unit tests to make sure date encoding works.
+[
+  { offset: 300, seconds: 1401938626 },
+  { offset: 400, seconds: 1401938626 }
+].forEach(function (date) {
+  var verify = parseDate(encodeDate(date));
+  if (verify.seconds !== date.seconds || verify.offset !== date.offset) {
+    throw new Error("Verification failure testing date encoding");
+  }
+});
+
+function twoDigit(num) {
+  if (num < 10) return "0" + num;
+  return "" + num;
+}
+
+function singleCall(callback) {
+  var done = false;
+  return function () {
+    if (done) return console.warn("Discarding extra callback");
+    done = true;
+    return callback.apply(this, arguments);
+  };
+}
+
+function hashAs(type, body) {
+  var buffer = frame({type: type, body: body});
+  return sha1(buffer);
+}
+
+},{"../lib/xhr":55,"bodec":6,"git-sha1":7,"js-git/lib/modes":49,"js-git/lib/object-codec":50}],57:[function(require,module,exports){
 // super simple module for the most common nodejs use case.
 exports.markdown = require("./markdown");
 exports.parse = exports.markdown.toHTML;
 
-},{"./markdown":48}],48:[function(require,module,exports){
+},{"./markdown":58}],58:[function(require,module,exports){
 // Released under MIT license
 // Copyright (c) 2009-2010 Dominic Baggott
 // Copyright (c) 2009-2010 Ash Berlin
@@ -9693,9 +11526,38 @@ function merge_text_nodes( jsonml ) {
   }
 } )() );
 
-},{"util":54}],49:[function(require,module,exports){
+},{"util":65}],59:[function(require,module,exports){
+var	handlebars = require('handlebars'),
+	markdown = require('markdown').markdown;
 
-},{}],50:[function(require,module,exports){
+module.exports = {
+	render : function(data, write){
+		var templates = {};
+
+			for (t in data.templates){
+				templates[t] = handlebars.compile(data.templates[t]);
+			}
+
+
+		function slug(title){
+			return title.replace(/[^A-Za-z0-9-]+/g, '-');
+		}
+
+		for ( var i = 0; i < data.posts.length; i++){
+			var post = data.posts[i];
+			data.posts[i].slug = slug(post.title);
+			data.posts[i].html = markdown.toHTML( post.content );
+			write("posts/" + post.slug + ".html",  templates['post'](post));
+		}
+
+			var homePage = templates['home']({posts : data.posts});
+			write('index.html', homePage);
+	}
+}
+
+},{"handlebars":37,"markdown":57}],60:[function(require,module,exports){
+
+},{}],61:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -9720,7 +11582,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],51:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -9948,7 +11810,7 @@ var substr = 'ab'.substr(-1) === 'b'
 ;
 
 }).call(this,require('_process'))
-},{"_process":52}],52:[function(require,module,exports){
+},{"_process":63}],63:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -10041,14 +11903,14 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],53:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],54:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -10638,4 +12500,4 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":53,"_process":52,"inherits":50}]},{},[4]);
+},{"./support/isBuffer":64,"_process":63,"inherits":61}]},{},[2]);
