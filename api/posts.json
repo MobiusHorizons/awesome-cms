@@ -6,7 +6,12 @@
 	},
 	{
 		"title" : "test post",
-		"author" : "no one",
-		"content" : "null"
+		"author" : "Paul Martin",
+		"content" : "#Title\n ## Subtitle\n\n##List\n* 1\n* two\n    * nested\n    * and so on\n * ..."
+	},
+	{
+		"title" : "another post",
+		"author" : "nobody in particular",
+		"content" : "go away."
 	}
 ]
